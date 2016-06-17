@@ -26,6 +26,7 @@ var sendRes = function(res,items){
 
 function pushCoordsData(data){
   io.emit('PushLocation', JSON.stringify(data));  // send data to browser
+  console.log("Coordinates pushed");
 }
 
 function sendTargetCoordinates(coordData, res){
@@ -34,6 +35,7 @@ function sendTargetCoordinates(coordData, res){
 	data["LAT"] = coordData.LAT;
 	data["LON"] = coordData.LON; */
 	pushCoordsData(coordData);
+	console.dir(coordData);
 	sendRes(res, "");
 }
 
@@ -46,7 +48,7 @@ function handleSenses(senses, time){
         pushData["LAT"] = senses[i].val;  
       }
 		if (senses[i].sId == '0x00010200' ){ // Longtitude
-        console.log("The latitude is " + senses[i].val); // remove this
+        console.log("The longitude is " + senses[i].val); // remove this
         pushData["LON"] = senses[i].val;  
       }      
       else{
@@ -63,6 +65,31 @@ if (i < 10) {
     return i;
 }
 
+function getDateTime(paras) {
+    var today = new Date();
+    var dd = today.getDate();
+    var mm = today.getMonth()+1; //January is 0!
+    var yyyy = today.getFullYear();
+    var h = today.getHours(); 
+    var min = today.getMinutes();
+
+    if(dd<10) {
+        dd='0'+dd
+    } 
+
+    if(mm<10) {
+        mm='0'+mm
+    } 
+    today = h+min+mm+dd+yyyy;
+    console.log(today);
+    return today;
+}
+
+function generateGPXFileName() {
+    var date_ext = getDateTime();
+    var fileName =  "koira"+date_ext+".gpx"; 
+    return fileName;
+}
 
 
 //REST API implementation sending the coordinates from the target man
@@ -73,6 +100,21 @@ server.post('/sendCoords', function (req, res, next) {
     next();
 });
 
+//REST API implementation starting the koira haku
+server.post('/startHaku', function (req, res, next) {
+    var hakuStarted = true;
+    console.log ("Start button clicked, Haku can start");
+    generateGPXFileName(fileName);
+    res.end(fileName);
+});
+
+//REST API implementation starting the koira haku
+server.post('/stopHaku', function (req, res, next) {
+    var hakuStarted = false;
+    console.log ("stop button clicked, Haku stopped");
+//    closeGPXFileName(fileName);
+    res.end(fileName);
+});
 
 // REST API implementation for handling the push messages from the Thingsee IOT
 server.post('/', function (req, res, next) {
@@ -98,6 +140,6 @@ io.sockets.on('connection', function (socket) {
 });                              
 
 server.listen(8060, function () {
-    console.log('Node.js weatherMachine Kerttu listening at %s', server.url);
+    console.log('Node.js Maalimies server is listening at %s', server.url);
 });
 
